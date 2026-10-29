@@ -1,0 +1,15 @@
+Package: gradconj
+Title: Le gradient conjugué
+Version: 0.0.0.9000
+Authors@R: 
+    person("Albert Ivan", "Eyenga Obama", email = "obamaalbertoivan@icloud.com", role = c("aut", "cre"))
+Description: Implémentation pédagogique du gradient conjugué pour résoudre
+    des systèmes linéaires, comparée à la descente de gradient et à
+    la méthode de Cholesky, sur des exemples de masses reliées par des ressorts.
+License: MIT + file LICENSE
+Config/roxygen2/version: 8.1.1
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
