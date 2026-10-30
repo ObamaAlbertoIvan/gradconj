@@ -1,0 +1,25 @@
+url: https://ObamaAlbertoIvan.github.io/gradconj/
+template:
+  bootstrap: 5
+  bslib:
+    bg: "#FFFFFF"
+    fg: "#222222"
+    primary: "#1F4E9C"
+    font-size-base: 1.1rem
+navbar:
+  structure:
+    left: [comprendre, analyser, appliquer, package]
+    right: [github]
+  components:
+    comprendre:
+      text: "1. Comprendre"
+      href: articles/comprendre.html
+    analyser:
+      text: "2. Analyser"
+      href: articles/analyser.html
+    appliquer:
+      text: "3. Appliquer"
+      href: articles/appliquer.html
+    package:
+      text: "4. Package"
+      href: reference/index.html

@@ -2,3 +2,4 @@
 
 export(cg)
 export(descente_simple)
+export(filet_ressorts)
