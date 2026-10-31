@@ -1,0 +1,23 @@
+---
+title: "3. Appliquer"
+---
+## Un filet de 40 × 40 masses
+<img src="../schema_filet.jpeg" width="260">
+Chaque masse est reliée à ses quatre voisines. Il y a 1 600 inconnues,
+mais chaque équation ne contient que 5 nombres non nuls : la matrice est
+**creuse**. C'est le principe des logiciels de calcul de structures
+(méthode des éléments finis).
+## Résultat
+Chaque masse est poussée par 0,01 N. Le filet se déforme comme un trampoline.
+```{r filet, echo=FALSE, fig.width=6, fig.height=5}
+library(gradconj)
+N <- 40
+A <- filet_ressorts(N)
+f <- rep(0.01, N * N)
+res <- cg(A, f)
+u <- matrix(res$x, nrow = N, ncol = N)
+persp(u, theta = 30, phi = 30, col = "orange", shade = 0.5,
+      xlab = "colonne", ylab = "ligne", zlab = "deplacement (cm)")
+```
+Le gradient conjugué trouve la solution en **`r res$iterations`** itérations.
+Le déplacement maximal est de **`r round(max(u), 2)` cm**, au centre du filet.

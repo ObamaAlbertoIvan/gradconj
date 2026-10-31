@@ -1,0 +1,57 @@
+---
+title: "2. Analyser"
+---
+
+## Combien d'itérations ?
+On compare la descente simple et le gradient conjugué sur un filet de
+900 masses, avec la même précision.
+```{r convergence, echo=FALSE, fig.width=6, fig.height=4}
+library(gradconj)
+N <- 30
+A <- filet_ressorts(N)
+f <- rep(0.01, N * N)
+cg_res <- cg(A, f)
+sd_res <- descente_simple(A, f)
+taille_f <- sqrt(sum(f * f))
+plot(sd_res$historique / taille_f, type = "l", log = "y", col = "red",
+     xlab = "numero d'iteration", ylab = "force restante (relative, echelle log)")
+lines(cg_res$historique / taille_f, col = "blue", lwd = 2)
+abline(h = 1e-8, lty = 2, col = "grey50")
+legend("topright", legend = c("descente simple", "gradient conjugue"),
+       col = c("red", "blue"), lty = 1, bty = "n")
+```
+Descente simple : **`r sd_res$iterations`** itérations.
+Gradient conjugué : **`r cg_res$iterations`** itérations.
+## Plus rapide que Cholesky ?
+```{r mesures, echo=FALSE, fig.width=6, fig.height=4}
+library(Matrix)
+resultats <- data.frame()
+for (N in c(10, 20, 30, 40)) {
+  A <- filet_ressorts(N)
+  f <- rep(0.01, N * N)
+  t_dense <- system.time({
+    R <- chol(as.matrix(A)); x1 <- backsolve(R, forwardsolve(t(R), f))
+  })[["elapsed"]]
+  t_creux <- system.time({
+    x2 <- as.vector(solve(Cholesky(forceSymmetric(A)), f))
+  })[["elapsed"]]
+  t_cg <- system.time({ res <- cg(A, f) })[["elapsed"]]
+  resultats <- rbind(resultats, data.frame(N = N, n = N * N, dense = t_dense,
+                     creux = t_creux, cg = t_cg, iterations = res$iterations))
+}
+temps <- pmax(as.matrix(resultats[, c("dense", "creux", "cg")]), 0.001)
+matplot(resultats$n, temps, type = "b", log = "xy", lty = 1,
+        pch = c(15, 17, 16), col = c("grey40", "red", "blue"),
+        xlab = "nombre d'inconnues n", ylab = "temps (secondes)")
+legend("topleft", legend = c("Cholesky classique", "Cholesky creux", "gradient conjugue"),
+       col = c("grey40", "red", "blue"), pch = c(15, 17, 16), lty = 1, bty = "n")
+```
+```{r tableau, echo=FALSE}
+knitr::kable(resultats, digits = 4)
+```
+**Ce qu'il faut retenir.** Le Cholesky classique ralentit très vite quand n
+grandit. Le Cholesky creux et le gradient conjugué restent proches.
+Le gradient conjugué prend l'avantage sur de très grands systèmes,
+surtout en 3D, ou quand un résultat approché suffit.
+Si on a plusieurs seconds membres avec la même matrice, Cholesky est meilleur :
+on factorise une seule fois.

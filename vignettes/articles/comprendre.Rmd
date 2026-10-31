@@ -1,0 +1,40 @@
+---
+title: "1. Comprendre"
+---
+## L'équilibre de deux masses
+<img src="../schema_deux_masses.jpeg" width="520">
+Sur chaque masse, la somme des forces est nulle. On obtient deux équations :
+**11 u₁ − 10 u₂ = 1** et **−10 u₁ + 11 u₂ = 0**
+On les écrit **K u = f** : K est la matrice de raideur, u les déplacements,
+f les forces. K est symétrique (action et réaction) et définie positive
+(l'énergie des ressorts est toujours positive).
+## L'équilibre est le fond d'un bol
+À l'équilibre, l'énergie du système est minimale. Résoudre le système,
+c'est descendre au fond du bol.- **Rouge** : on suit la plus forte pente. Ça zigzague, car le bol est allongé.- **Bleu** : le gradient conjugué choisit ses directions pour ne pas défaire
+  le travail déjà fait. Deux pas suffisent.
+```{r zigzag, echo=FALSE, fig.width=6, fig.height=5}
+library(gradconj)
+K <- matrix(c(11, -10, -10, 11), nrow = 2)
+f <- c(1, 0)
+cg_res <- cg(K, f, garder_points = TRUE)
+sd_res <- descente_simple(K, f, maxit = 12, garder_points = TRUE)
+energie <- function(u1, u2) 0.5 * (11 * u1^2 - 20 * u1 * u2 + 11 * u2^2) - u1
+g <- seq(-0.3, 0.9, length.out = 100)
+z <- outer(g, g, energie)
+contour(g, g, z, nlevels = 15, col = "grey60",
+        xlab = "deplacement u1 (cm)", ylab = "deplacement u2 (cm)")
+lines(do.call(rbind, sd_res$points), type = "o", col = "red", pch = 16)
+lines(do.call(rbind, cg_res$points), type = "o", col = "blue", pch = 16, lwd = 2)
+points(11/21, 10/21, pch = 8, cex = 2)
+legend("topleft", legend = c("descente simple (12 pas)", "gradient conjugue"),
+       col = c("red", "blue"), lty = 1, pch = 16, bty = "n")
+```
+<img src="../zigzag.gif" width="520">
+
+## L'algorithme en quatre idées
+1. Calculer la **force non équilibrée** r.
+2. Avancer d'un **pas optimal** dans la direction p.
+3. **Mettre à jour** la force restante.
+4. Choisir la **direction suivante** en gardant une dose de l'ancienne :
+   c'est ce qui évite de défaire le travail déjà fait.
+Pour n équations, la solution exacte est atteinte en au plus n pas.

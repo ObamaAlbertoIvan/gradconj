@@ -15,3 +15,4 @@ Suggests:
 Config/testthat/edition: 3
 Imports: 
     Matrix
+Config/Needs/website: rmarkdown
