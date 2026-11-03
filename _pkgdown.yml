@@ -1,25 +1,42 @@
-url: https://ObamaAlbertoIvan.github.io/gradconj/
+url: https://obamaalbertoivan.github.io/gradconj/
+
 template:
   bootstrap: 5
+  bootswatch: flatly
   bslib:
+    primary: "#0B6E6E"
+    secondary: "#E8710A"
     bg: "#FFFFFF"
-    fg: "#222222"
-    primary: "#1F4E9C"
-    font-size-base: 1.1rem
+    fg: "#1F2933"
+    headings-color: "#0B6E6E"
+    link-color: "#0B6E6E"
+    font-size-base: 1.05rem
+
 navbar:
+  bg: primary
+  type: dark
   structure:
-    left: [comprendre, analyser, appliquer, package]
+    left: [comprendre, eau, analyser, appliquer, validation, package]
     right: [github]
   components:
     comprendre:
       text: "1. Comprendre"
       href: articles/comprendre.html
+    eau:
+      text: "2. L'eau"
+      href: articles/eau.html
     analyser:
-      text: "2. Analyser"
+      text: "3. Analyser"
       href: articles/analyser.html
     appliquer:
-      text: "3. Appliquer"
+      text: "4. Applications"
       href: articles/appliquer.html
+    validation:
+      text: "5. Tests"
+      href: articles/validation.html
     package:
-      text: "4. Package"
+      text: "Package"
       href: reference/index.html
+    github:
+      icon: fab fa-github fa-lg
+      href: https://github.com/ObamaAlbertoIvan/gradconj

@@ -1,0 +1,49 @@
+.vous-allez {
+  border-left: 6px solid #0B6E6E;
+  background: #EAF4F4;
+  padding: 0.8rem 1.2rem;
+  margin: 1.2rem 0;
+  border-radius: 0 10px 10px 0;
+}
+
+.retenir {
+  border-left: 6px solid #E8710A;
+  background: #FFF1E4;
+  padding: 0.8rem 1.2rem;
+  margin: 1.5rem 0;
+  border-radius: 0 10px 10px 0;
+  font-weight: 500;
+}
+
+.attention {
+  border-left: 6px solid #9AA5B1;
+  background: #F4F6F8;
+  padding: 0.8rem 1.2rem;
+  margin: 1.2rem 0;
+  border-radius: 0 10px 10px 0;
+  font-size: 0.95rem;
+}
+
+.conclusion {
+  border: 2px solid #0B6E6E;
+  background: #FFFFFF;
+  padding: 0.8rem 1.2rem;
+  margin: 1.2rem 0;
+  border-radius: 10px;
+}
+
+.vous-allez p:last-child, .retenir p:last-child, .attention p:last-child, .conclusion p:last-child {
+  margin-bottom: 0;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+h2 {
+  margin-top: 2.2rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 3px solid #E8710A;
+  display: inline-block;
+}

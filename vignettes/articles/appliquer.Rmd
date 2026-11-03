@@ -1,23 +1,200 @@
 ---
-title: "3. Appliquer"
+title: "4. Applications en ingénierie"
 ---
-## Un filet de 40 × 40 masses
-<img src="../schema_filet.jpeg" width="260">
-Chaque masse est reliée à ses quatre voisines. Il y a 1 600 inconnues,
-mais chaque équation ne contient que 5 nombres non nuls : la matrice est
-**creuse**. C'est le principe des logiciels de calcul de structures
-(méthode des éléments finis).
-## Résultat
-Chaque masse est poussée par 0,01 N. Le filet se déforme comme un trampoline.
-```{r filet, echo=FALSE, fig.width=6, fig.height=5}
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center", fig.width = 6.5, fig.height = 4.5, dpi = 120)
 library(gradconj)
-N <- 40
-A <- filet_ressorts(N)
-f <- rep(0.01, N * N)
-res <- cg(A, f)
-u <- matrix(res$x, nrow = N, ncol = N)
-persp(u, theta = 30, phi = 30, col = "orange", shade = 0.5,
-      xlab = "colonne", ylab = "ligne", zlab = "deplacement (cm)")
 ```
-Le gradient conjugué trouve la solution en **`r res$iterations`** itérations.
-Le déplacement maximal est de **`r round(max(u), 2)` cm**, au centre du filet.
+
+::: vous-allez
+**Quatre problèmes d'ingénieur, résolus avec le même code :**
+
+1. **Hydraulique** : une usine s'installe dans un quartier, le réseau d'eau tient-il ?
+2. **Génie civil** : un immeuble de 10 étages sous le vent.
+3. **Génie thermique** : faut-il isoler un mur ?
+4. **Génie électrique** : un circuit de résistances.
+
+Dans chaque cas, on suit la même démarche : **modéliser** (écrire K et f), **résoudre** (`cg()`), **interpréter** (que doit décider l'ingénieur ?).
+:::
+
+## Hydraulique : une usine s'installe dans un quartier
+
+**Situation.** Un quartier de 20 × 20 intersections est alimenté par son pourtour. Chaque intersection consomme 0,05 L/s. Une usine veut s'installer au centre, avec une consommation de **5 L/s**. La chute de pression admise est de **4 m** au maximum. Faut-il renforcer le réseau ?
+
+**Modèle.** K = `reseau_grille(20)` ; f = la consommation de chaque intersection.
+
+```{r eau-usine}
+N <- 20
+A <- reseau_grille(N)
+
+f_avant <- rep(0.05, N * N)             # le quartier seul
+f_apres <- f_avant
+centre  <- (10 - 1) * N + 10            # numéro de l'intersection du centre
+f_apres[centre] <- f_apres[centre] + 5  # l'usine s'ajoute au centre
+
+avant <- cg(A, f_avant)
+apres <- cg(A, f_apres)
+
+c(chute_max_avant = max(avant$x), chute_max_apres = max(apres$x))
+```
+
+**Interprétation.** Avant l'usine, la chute maximale est d'environ **1,6 m** : tout va bien. Avec l'usine, elle monte à environ **4,8 m** : la limite de 4 m est dépassée. Voyons où :
+
+```{r eau-carte}
+image(1:N, 1:N, matrix(apres$x, N), col = hcl.colors(60, "YlOrRd", rev = TRUE),
+      xlab = "ouest - est", ylab = "sud - nord", asp = 1,
+      main = "Chute de pression avec l'usine (m)")
+contour(1:N, 1:N, matrix(apres$x, N), add = TRUE, col = "white", levels = 4, lwd = 3)
+```
+
+Le trait blanc entoure la zone où la chute dépasse 4 m. Une solution : remplacer les tuyaux par des tuyaux de plus gros diamètre, c'est-à-dire **doubler les conductances**. Cela revient à multiplier K par 2.
+
+```{r eau-renfort}
+renforce <- cg(2 * A, f_apres)
+max(renforce$x)
+```
+
+La chute maximale est divisée par 2 (environ **2,4 m**) : le réseau renforcé respecte le critère. **Le calcul a permis de décider, avant de poser le moindre tuyau.**
+
+## Génie civil : un immeuble de 10 étages sous le vent
+
+<img src="../img/immeuble.png" alt="Immeuble de 10 étages" width="55%">
+
+**Situation.** Le vent pousse chaque étage avec **30 kN**. Chaque étage résiste comme un ressort de raideur **100 000 kN/m**. On cherche le déplacement de chaque étage.
+
+**Modèle.** u : déplacement des étages ; f : le vent ; K : les raideurs. L'étage 1 est retenu par le sol, l'étage 10 n'est retenu que par l'étage 9 : le dernier lien vaut 0.
+
+```{r immeuble}
+k <- rep(1e5, 10)              # raideur de chaque étage (kN/m)
+A <- chaine(c(k, 0))           # le 0 final : le toit n'est retenu par rien d'autre
+vent <- rep(30, 10)            # 30 kN de vent à chaque étage
+
+res <- cg(A, vent)
+u <- res$x * 1000              # on convertit les mètres en millimètres
+round(u, 1)                    # déplacement de chaque étage (mm)
+```
+
+Le toit se déplace de **16,5 mm**. Ce qui compte pour les cloisons et les vitres, c'est la **dérive d'étage** : le déplacement d'un étage par rapport à celui du dessous.
+
+```{r derive}
+derive <- diff(c(0, u))
+round(derive, 1)               # dérive de chaque étage (mm)
+max(derive)
+```
+
+La dérive est maximale au **rez-de-chaussée (3 mm)**, car il porte la poussée de tous les étages au-dessus. Elle diminue à mesure que l'on monte.
+
+```{r immeuble-graphe}
+plot(c(0, u), 0:10, type = "o", pch = 19, lwd = 3, col = "#0B6E6E",
+     xlab = "déplacement horizontal (mm)", ylab = "étage",
+     main = "Déformée de l'immeuble")
+```
+
+<img src="../img/anim_immeuble.gif" alt="Animation : l'immeuble sous le vent" width="55%">
+
+**Que décide l'ingénieur ?** On compare la dérive à une limite fixée par la norme (de l'ordre de quelques millimètres pour une hauteur d'étage de 3 m ; il faut prendre la valeur de la norme de votre cours). Étudions un **étage souple** : le 5e étage n'a que 40 % de la raideur des autres (grandes baies vitrées, par exemple).
+
+```{r etage-souple}
+k2 <- k
+k2[5] <- 0.4 * 1e5
+res2 <- cg(chaine(c(k2, 0)), vent)
+derive2 <- diff(c(0, res2$x * 1000))
+round(derive2, 1)
+res2$x[10] * 1000              # déplacement du toit (mm)
+```
+
+Au 5e étage, la dérive passe à **4,5 mm** (contre 1,8 mm) et le toit à **19,2 mm** : un étage souple concentre la déformation. C'est pourquoi on évite les étages « mous » dans les bâtiments.
+
+## Génie thermique : faut-il isoler un mur ?
+
+<img src="../img/mur.png" alt="Mur multicouche" width="80%">
+
+**Situation.** Un mur est composé de 4 couches (de l'extérieur vers l'intérieur) : enduit, béton, isolant, plâtre. Il fait **35 °C dehors** et **22 °C dedans** (climatisation). Quelle chaleur traverse le mur ?
+
+**Modèle.** u : la température dans l'épaisseur ; K : la conduction des couches (λ / épaisseur) ; f : les deux températures imposées aux bords. La même fonction `chaine()` sert encore, avec une fonction qui assemble les couches :
+
+```{r mur-fonction}
+mur <- function(e, lam, m, T_ext = 35, T_int = 22) {
+  g <- rep(lam * m / e, times = m)       # conductance de chaque lien (W par m2 et par K)
+  n <- length(g) - 1                     # nombre de noeuds
+  b <- rep(0, n)
+  b[1] <- g[1] * T_ext                   # le bord extérieur impose 35 °C
+  b[n] <- b[n] + g[n + 1] * T_int        # le bord intérieur impose 22 °C
+  temp <- cg(chaine(g), b)$x
+  list(T = temp, x = cumsum(rep(e / m, times = m))[1:n] * 100,
+       flux = g[1] * (T_ext - temp[1]))
+}
+```
+
+Voici le mur isolé, puis le mur **sans l'isolant** :
+
+```{r mur-calcul}
+e   <- c(0.02, 0.20, 0.05, 0.02)    # épaisseurs : enduit, béton, isolant, plâtre (m)
+lam <- c(1.0, 1.4, 0.04, 0.35)      # conductivité thermique (W/m/K)
+m   <- c(2, 10, 5, 2)               # nombre de noeuds dans chaque couche
+
+avec <- mur(e, lam, m)
+sans <- mur(e[-3], lam[-3], m[-3])  # on retire la couche 3 (l'isolant)
+
+c(flux_avec_isolant = avec$flux, flux_sans_isolant = sans$flux)    # W par m2
+1 - avec$flux / sans$flux           # part de chaleur évitée
+```
+
+L'isolant de 5 cm fait passer le flux de **59 W/m²** à **8,8 W/m²** : **85 % de chaleur en moins**. Pour un mur de 20 m², cela fait 177 W au lieu de 1 182 W à évacuer par la climatisation.
+
+```{r mur-graphe}
+plot(avec$x, avec$T, type = "l", lwd = 3, col = "#0B6E6E", ylim = c(21, 36),
+     xlab = "position dans le mur (cm, de l'extérieur vers l'intérieur)",
+     ylab = "température (°C)", main = "La température dans l'épaisseur du mur")
+lines(sans$x, sans$T, lwd = 3, col = "#E8710A")
+legend("topright", c("avec isolant", "sans isolant"), col = c("#0B6E6E", "#E8710A"),
+       lwd = 3, bty = "n")
+```
+
+Avec l'isolant, la température **s'effondre dans la couche isolante** : elle passe d'environ 33,6 °C à 22,5 °C sur les 5 cm d'isolant. Cette couche absorbe à elle seule 11 des 13 degrés d'écart : c'est elle qui bloque la chaleur. Le béton, lui, ne change presque pas la température.
+
+## Génie électrique : un circuit de résistances
+
+On revient sur le circuit de la page 1. L'analyse nodale donne les tensions ; on en déduit les **courants** dans chaque résistance.
+
+```{r circuit}
+g   <- c(1, 10, 1)                    # conductances des trois résistances (S)
+K   <- chaine(g)
+res <- cg(K, c(1, 0))                 # 1 A injecté au nœud 1
+u   <- res$x
+
+courants <- c(g[1] * u[1], g[2] * (u[1] - u[2]), g[3] * u[2])
+names(courants) <- c("vers la masse (noeud 1)", "entre 1 et 2", "vers la masse (noeud 2)")
+courants
+```
+
+On vérifie la **loi des nœuds** : au nœud 1, le courant qui part (0,524 + 0,476) est égal au courant injecté (1 A). Et la **résistance équivalente** vue de la source :
+
+```{r req}
+u[1] / 1                              # tension divisée par le courant : R équivalente
+1 / (1 / 1 + 1 / (0.1 + 1))           # formule des résistances en parallèle et en série
+```
+
+Les deux résultats sont identiques (0,5238 Ω). Un circuit réel peut compter des milliers de nœuds (circuits intégrés, réseau électrique) : on écrit alors K de la même façon, et le gradient conjugué la résout.
+
+## Et dans d'autres domaines ?
+
+Tout problème où « une quantité se répartit dans un réseau ou un milieu » donne un système K u = f du même type.
+
+| Domaine | Ce que représente u | Ce que représente f |
+|:--|:--|:--|
+| **Géotechnique** : écoulement d'eau dans un sol | charge hydraulique | débit injecté ou pompé |
+| **Électrostatique** | potentiel électrique | charges |
+| **Mécanique des structures** (éléments finis) | déplacements | forces appliquées |
+| **Thermique 2D et 3D** (moteur, puce) | température | sources de chaleur |
+| **Traitement d'image** | image débruitée | image bruitée |
+| **Statistiques et apprentissage** | coefficients d'un modèle (moindres carrés) | données |
+
+Dans les logiciels d'éléments finis, les matrices dépassent le million d'inconnues : c'est là que le gradient conjugué (avec préconditionnement) devient indispensable.
+
+::: conclusion
+**Bilan.** Un seul algorithme, quatre métiers. À chaque fois : on traduit la physique en K u = f, `cg()` résout, et l'ingénieur interprète le résultat pour décider (renforcer un réseau, vérifier une dérive, choisir une isolation, valider un circuit).
+:::
+
+**Suite :** [5. Les tests](validation.html)

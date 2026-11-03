@@ -1,0 +1,115 @@
+---
+title: "2. Un second exemple : l'eau d'un quartier"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center", fig.width = 6.5, fig.height = 5, dpi = 120)
+library(gradconj)
+```
+
+::: vous-allez
+**Dans cette page, vous allez voir :**
+
+- que le même algorithme calcule les **pressions d'un réseau de distribution d'eau** ;
+- un exemple minuscule (9 intersections) que l'on lit à la main ;
+- un quartier réaliste de **1 600 intersections**, résolu en une fraction de seconde ;
+- pourquoi, ici, le gradient conjugué est une bonne méthode.
+:::
+
+## La situation
+
+Une ville est alimentée par un château d'eau. Dans le quartier, les tuyaux forment une grille. À chaque intersection, des clients prélèvent de l'eau. Plus on est loin de l'alimentation, plus la **pression baisse**.
+
+L'ingénieur veut savoir : **à chaque intersection, de combien la pression chute-t-elle ?** Si elle chute trop, les robinets des étages élevés ne coulent plus.
+
+## Le modèle
+
+- **u** : la chute de pression à chaque intersection (en mètres de colonne d'eau).
+- **f** : le débit consommé à chaque intersection (en L/s).
+- **K** : la matrice qui dit comment les tuyaux relient les intersections.
+
+Le raisonnement est identique à celui du circuit : l'eau qui entre à une intersection est égale à l'eau qui en sort (comme la loi des nœuds). Chaque intersection est reliée à ses **4 voisins**. Les intersections du bord sont aussi reliées à l'alimentation, où la chute de pression est nulle.
+
+Résultat : chaque ligne de K contient un **4** sur la diagonale (les 4 tuyaux de l'intersection) et un **−1** pour chaque voisin.
+
+## Un exemple minuscule : 3 × 3 intersections
+
+Au centre (nœud 5), une usine consomme **8 L/s**. Les autres intersections ne consomment rien.
+
+<img src="../img/reseau_eau3.png" alt="Réseau 3 x 3" width="70%">
+
+```{r reseau3}
+A <- reseau_grille(3)
+as.matrix(A)      # la matrice 9 x 9 (la version « creuse » est convertie pour l'affichage)
+```
+
+Vérifiez la ligne 5 : un 4 au milieu, et −1 pour les nœuds 2, 4, 6, 8, ses quatre voisins. Les zéros ailleurs signifient « pas de tuyau direct ».
+
+```{r pression3}
+f <- c(0, 0, 0, 0, 8, 0, 0, 0, 0)    # l'usine est au nœud 5
+res <- cg(A, f)
+matrix(res$x, nrow = 3)              # on remet les 9 valeurs en carré 3 x 3
+res$iterations
+```
+
+On lit : **3 m** au centre, **1 m** pour les quatre voisins, **0,5 m** dans les coins. La chute est maximale là où l'on consomme, et elle diminue en s'éloignant. Cela correspond à l'intuition.
+
+::: retenir
+Observez : 9 inconnues, mais seulement **3 pas**. Ici, la symétrie du problème (les quatre voisins se comportent pareil) fait gagner du temps. En général, on a besoin d'au plus n pas, et souvent beaucoup moins.
+:::
+
+## Un vrai quartier : 40 × 40 intersections
+
+On passe à **1 600 intersections**. Chacune consomme **0,1 L/s** (les habitations). C'est un système de 1 600 équations à 1 600 inconnues.
+
+```{r quartier}
+N <- 40
+A <- reseau_grille(N)
+f <- rep(0.1, N * N)
+res <- cg(A, f)
+
+res$iterations       # nombre de pas
+max(res$x)           # la plus forte chute de pression (m)
+min(res$x)           # la plus faible : une intersection du bord
+```
+
+**74 pas** suffisent pour 1 600 inconnues. Pour la carte des pressions :
+
+```{r carte, fig.height=5.4}
+image(1:N, 1:N, matrix(res$x, N), col = hcl.colors(60, "YlOrRd", rev = TRUE),
+      xlab = "intersections d'ouest en est", ylab = "intersections du sud au nord",
+      main = "Chute de pression dans le quartier (m)", asp = 1)
+contour(1:N, 1:N, matrix(res$x, N), add = TRUE, col = "white", lwd = 1.2)
+```
+
+Plus la zone est foncée, plus la pression chute. Le **centre est le point faible** : il est le plus loin de l'alimentation, qui entoure le quartier. Au bord, la chute est presque nulle.
+
+<img src="../img/anim_eau.gif" alt="Animation : les pressions se construisent pas à pas" width="70%">
+
+L'animation montre la solution se construire pas à pas : le gradient conjugué trouve d'abord la forme générale, puis affine.
+
+## Que se passe-t-il si la consommation double ?
+
+```{r double}
+res2 <- cg(A, 2 * f)
+max(res2$x)
+max(res2$x) / max(res$x)
+```
+
+La chute maximale **double exactement** (rapport 2). Le modèle est **linéaire** : deux fois plus de demande, deux fois plus de chute. Ce type de réponse est ce que l'ingénieur cherche : « jusqu'à quelle demande le réseau tient-il ? »
+
+## Pourquoi ce choix de méthode ?
+
+La matrice K de ce réseau est :
+
+- **symétrique et définie positive** : le gradient conjugué s'applique ;
+- **creuse** : sur chaque ligne, seulement 5 valeurs sont non nulles parmi 1 600. On ne stocke que celles-là ;
+- **grande** : quand le réseau compte des centaines de milliers de nœuds, on ne veut plus de méthode qui coûte n³ opérations.
+
+Le gradient conjugué n'utilise que des **produits matrice × vecteur**, qui sont très rapides sur une matrice creuse.
+
+::: attention
+Attention au modèle : tous les tuyaux ont ici la même conductance, et les pertes de charge sont supposées linéaires. Un vrai calcul de réseau est plus complet (tuyaux de diamètres différents, pertes non linéaires, pompes, vannes). Mais on retrouve ce même système linéaire à l'intérieur de chaque étape de calcul d'un logiciel professionnel.
+:::
+
+**Suite :** [3. Analyser la méthode](analyser.html)

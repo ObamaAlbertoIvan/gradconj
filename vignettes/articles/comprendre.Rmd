@@ -1,40 +1,169 @@
 ---
-title: "1. Comprendre"
+title: "1. Comprendre le gradient conjugué"
 ---
-## L'équilibre de deux masses
-<img src="../schema_deux_masses.jpeg" width="520">
-Sur chaque masse, la somme des forces est nulle. On obtient deux équations :
-**11 u₁ − 10 u₂ = 1** et **−10 u₁ + 11 u₂ = 0**
-On les écrit **K u = f** : K est la matrice de raideur, u les déplacements,
-f les forces. K est symétrique (action et réaction) et définie positive
-(l'énergie des ressorts est toujours positive).
-## L'équilibre est le fond d'un bol
-À l'équilibre, l'énergie du système est minimale. Résoudre le système,
-c'est descendre au fond du bol.- **Rouge** : on suit la plus forte pente. Ça zigzague, car le bol est allongé.- **Bleu** : le gradient conjugué choisit ses directions pour ne pas défaire
-  le travail déjà fait. Deux pas suffisent.
-```{r zigzag, echo=FALSE, fig.width=6, fig.height=5}
-library(gradconj)
-K <- matrix(c(11, -10, -10, 11), nrow = 2)
-f <- c(1, 0)
-cg_res <- cg(K, f, garder_points = TRUE)
-sd_res <- descente_simple(K, f, maxit = 12, garder_points = TRUE)
-energie <- function(u1, u2) 0.5 * (11 * u1^2 - 20 * u1 * u2 + 11 * u2^2) - u1
-g <- seq(-0.3, 0.9, length.out = 100)
-z <- outer(g, g, energie)
-contour(g, g, z, nlevels = 15, col = "grey60",
-        xlab = "deplacement u1 (cm)", ylab = "deplacement u2 (cm)")
-lines(do.call(rbind, sd_res$points), type = "o", col = "red", pch = 16)
-lines(do.call(rbind, cg_res$points), type = "o", col = "blue", pch = 16, lwd = 2)
-points(11/21, 10/21, pch = 8, cex = 2)
-legend("topleft", legend = c("descente simple (12 pas)", "gradient conjugue"),
-       col = c("red", "blue"), lty = 1, pch = 16, bty = "n")
-```
-<img src="../zigzag.gif" width="520">
 
-## L'algorithme en quatre idées
-1. Calculer la **force non équilibrée** r.
-2. Avancer d'un **pas optimal** dans la direction p.
-3. **Mettre à jour** la force restante.
-4. Choisir la **direction suivante** en gardant une dose de l'ancienne :
-   c'est ce qui évite de défaire le travail déjà fait.
-Pour n équations, la solution exacte est atteinte en au plus n pas.
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(fig.align = "center", fig.width = 6.5, fig.height = 4.5, dpi = 120)
+library(gradconj)
+```
+
+::: vous-allez
+**Dans cette page, vous allez comprendre :**
+
+- quel problème on cherche à résoudre (une équation du type **K u = f**) ;
+- pourquoi ce problème apparaît partout en ingénierie ;
+- l'idée du gradient conjugué, avec un exemple de deux nœuds que l'on peut vérifier à la main.
+:::
+
+## Un problème, quatre habits
+
+En ingénierie, on rencontre sans cesse la même situation : **on pousse un système, et on veut savoir comment il réagit**.
+
+- Un circuit : on injecte un courant, on cherche les **tensions** aux nœuds.
+- Un réseau d'eau : des clients consomment de l'eau, on cherche la **chute de pression** à chaque intersection.
+- Un immeuble : le vent pousse chaque étage, on cherche les **déplacements**.
+- Un mur : on chauffe un côté, on cherche les **températures** dans l'épaisseur.
+
+Ces quatre problèmes s'écrivent **exactement de la même façon** :
+
+$$K \, u = f$$
+
+<img src="../img/analogies.png" alt="Quatre domaines, une seule équation" width="100%">
+
+| Lettre | Circuit | Réseau d'eau | Immeuble | Mur |
+|:--|:--|:--|:--|:--|
+| **u** : ce qu'on cherche | tension (V) | chute de pression (m) | déplacement (m) | température (°C) |
+| **f** : ce qu'on impose | courant injecté (A) | débit consommé (L/s) | force du vent (kN) | chaleur apportée |
+| **K** : le système | conductances des fils | conductances des tuyaux | raideurs des étages | conductions des couches |
+
+::: retenir
+Une seule méthode de calcul sert donc pour quatre métiers. C'est ce qui rend le gradient conjugué intéressant.
+:::
+
+## Le plus petit exemple : un circuit à deux nœuds
+
+On injecte **1 A** au nœud 1. Trois résistances relient les nœuds entre eux et à la masse.
+
+<img src="../img/circuit.png" alt="Circuit à deux nœuds" width="85%">
+
+Au nœud 1, le courant injecté (1 A) se partage entre le fil vers la masse et le fil vers le nœud 2. C'est la loi des nœuds. On l'écrit pour chaque nœud, et on obtient :
+
+$$\begin{pmatrix} 11 & -10 \\ -10 & 11 \end{pmatrix} \begin{pmatrix} u_1 \\ u_2 \end{pmatrix} = \begin{pmatrix} 1 \\ 0 \end{pmatrix}$$
+
+Le **11** vient de 1 + 10 (les deux fils qui touchent le nœud 1). Le **−10** vient du fil entre les deux nœuds. Le logiciel construit cette matrice tout seul avec la fonction `chaine()` :
+
+```{r circuit}
+K <- chaine(c(1, 10, 1))   # les trois conductances : 1 S, 10 S, 1 S
+K
+f <- c(1, 0)               # 1 A injecté au nœud 1, rien au nœud 2
+```
+
+On résout avec notre gradient conjugué :
+
+```{r circuit-cg}
+res <- cg(K, f)
+res$x             # les tensions u1 et u2, en volts
+res$iterations    # le nombre de pas
+solve(K, f)       # la réponse exacte, pour comparer
+```
+
+La méthode trouve la bonne réponse **en 2 pas** : autant de pas que d'inconnues.
+
+::: attention
+Une propriété importante de la matrice K : elle est **symétrique** (le fil entre 1 et 2 est le même dans les deux sens) et **définie positive** (une vraie résistance dissipe de l'énergie, elle ne peut pas en créer). Le gradient conjugué ne fonctionne que dans ce cas, et on le rencontre très souvent en physique.
+:::
+
+## L'idée : descendre dans un bol
+
+Résoudre K u = f revient à trouver le point le plus bas d'un bol. Ce bol, c'est l'**énergie** :
+
+$$E(u) = \tfrac{1}{2}\, u^T K u - f^T u$$
+
+Au fond du bol, la pente est nulle, et la pente de E vaut justement K u − f. Donc **fond du bol ⇔ K u = f**.
+
+On part du point (0, 0) et on veut atteindre le fond. Deux stratégies :
+
+1. **La plus forte pente** : à chaque pas, on descend dans la direction où ça penche le plus. Intuitif, mais dans un bol allongé, on zigzague.
+2. **Le gradient conjugué** : on choisit des directions qui ne défont pas le travail des pas précédents.
+
+```{r bol, fig.height=5}
+cg_res <- cg(K, f, garder_points = TRUE)
+sd_res <- descente_simple(K, f, garder_points = TRUE)
+
+E  <- function(a, b) 0.5 * (K[1, 1] * a^2 + 2 * K[1, 2] * a * b + K[2, 2] * b^2) - f[1] * a - f[2] * b
+u1 <- seq(-0.1, 0.7, length.out = 120)
+u2 <- seq(-0.1, 0.7, length.out = 120)
+
+contour(u1, u2, outer(u1, u2, E), nlevels = 18, col = "grey70", asp = 1,
+        xlab = "u1 (volts)", ylab = "u2 (volts)", main = "Le bol d'énergie")
+P <- do.call(rbind, cg_res$points)          # les 3 points du gradient conjugué
+Q <- do.call(rbind, sd_res$points[1:12])    # les 12 premiers points de la plus forte pente
+lines(Q, type = "o", col = "#E8710A", lwd = 2, pch = 16)
+lines(P, type = "o", col = "#0B6E6E", lwd = 3, pch = 19)
+legend("topleft", c("plus forte pente (12 premiers pas)", "gradient conjugué (2 pas)"),
+       col = c("#E8710A", "#0B6E6E"), lwd = 3, bty = "n")
+```
+
+Les lignes grises sont des « courbes de niveau » : comme sur une carte, tous leurs points ont la même énergie. Le fond du bol est au centre des ellipses. La plus forte pente (orange) zigzague en se rapprochant. Le gradient conjugué (vert) arrive en 2 pas.
+
+<img src="../img/anim_zigzag.gif" alt="Animation : zigzag contre gradient conjugué" width="75%">
+
+Comptons les pas jusqu'à la précision demandée :
+
+```{r comparaison}
+cg(K, f)$iterations
+descente_simple(K, f)$iterations
+```
+
+**2 pas contre 194.** Et il ne s'agit que de deux inconnues.
+
+## Les quatre idées de l'algorithme
+
+Voici ce que fait le gradient conjugué à chaque pas. Il n'y a que quatre idées.
+
+1. **Mesurer ce qui reste.** On calcule la force restante `résidu r = f − K u` (le « résidu »). Si elle est presque nulle, on a trouvé la solution.
+2. **Choisir une direction `p`.** Au premier pas, c'est la force restante elle-même. Ensuite, c'est la force restante **corrigée** pour ne pas défaire les pas précédents.
+3. **Avancer du bon pas `α`.** On avance le long de `p` exactement jusqu'au point le plus bas de cette ligne.
+4. **Recommencer.**
+
+Faisons les deux pas à la main, avec exactement les formules de l'algorithme :
+
+```{r a-la-main}
+x <- c(0, 0)
+r <- f - as.vector(K %*% x)       # force restante au départ
+p <- r                            # première direction
+for (k in 1:2) {
+  Ap    <- as.vector(K %*% p)
+  alpha <- sum(r * r) / sum(p * Ap)       # longueur du pas
+  x     <- x + alpha * p                  # on avance
+  r_new <- r - alpha * Ap                 # nouvelle force restante
+  beta  <- sum(r_new * r_new) / sum(r * r)
+  p     <- r_new + beta * p               # nouvelle direction
+  r     <- r_new
+  cat("pas", k, ": u =", round(x, 4), "| force restante =", signif(sqrt(sum(r * r)), 3), "\n")
+}
+```
+
+| Pas | u₁ | u₂ | Force restante |
+|:--|:--|:--|:--|
+| 0 | 0 | 0 | 1 |
+| 1 | 0,0909 | 0 | 0,909 |
+| 2 | 0,5238 | 0,4762 | environ 10⁻¹⁶ (zéro) |
+
+Au pas 2, la force restante est nulle : l'équilibre est atteint.
+
+::: retenir
+**Pourquoi « conjugué » ?** Parce que chaque nouvelle direction est choisie pour ne pas défaire ce que les précédentes ont déjà réglé. En n pas, on a donc épuisé les n directions possibles, et la solution est exacte (au calcul près).
+:::
+
+## Mini-glossaire
+
+| Mot | Sens simple |
+|:--|:--|
+| **Résidu** | ce qui reste à équilibrer : f − K u |
+| **Symétrique** | la matrice est la même quand on échange lignes et colonnes |
+| **Définie positive** | l'énergie est toujours positive : le bol a un vrai fond |
+| **Itération** | un pas de l'algorithme |
+| **Conductance** | l'inverse d'une résistance : plus elle est grande, plus ça passe facilement |
+
+**Suite :** [2. Un second exemple : l'eau d'un quartier](eau.html)
