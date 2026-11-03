@@ -16,9 +16,15 @@ navbar:
   bg: primary
   type: dark
   structure:
-    left: [comprendre, eau, analyser, appliquer, validation, package]
+    left: [sommaire, comprendre, eau, analyser, appliquer, validation, package, merci]
     right: [github]
   components:
+    merci:
+      text: "Merci"
+      href: articles/merci.html
+    sommaire:
+      text: "Sommaire"
+      href: articles/sommaire.html
     comprendre:
       text: "1. Comprendre"
       href: articles/comprendre.html

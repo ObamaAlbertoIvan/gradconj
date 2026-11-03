@@ -123,3 +123,5 @@ Résultat attendu : **FAIL 0 | WARN 0 | SKIP 0 | PASS 17**.
 ::: attention
 Tous les résultats de ce site viennent du code du dépôt. Si un chiffre vous étonne, le moyen le plus sûr est d'exécuter la ligne correspondante : le code est court et lisible.
 :::
+
+<p style='text-align:center;margin-top:30px'><a href='merci.html' style='background:#E8710A;color:#ffffff;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:1.05rem'>Terminer &rarr;</a></p>
