@@ -1,5 +1,5 @@
 ---
-title: "3. Analyser la méthode"
+title: "3. Analyser l'algorithme"
 ---
 
 ```{r setup, include=FALSE}
@@ -8,17 +8,18 @@ library(gradconj)
 ```
 
 ::: vous-allez
-**Dans cette page, vous allez voir :**
+**Dans cette page, vous allez :**
 
-- à quelle vitesse le gradient conjugué converge, comparé à la plus forte pente ;
-- pourquoi : le « conditionnement » de la matrice ;
-- comment le nombre de pas évolue quand le problème grandit ;
-- une comparaison honnête avec les autres méthodes, et les limites.
+- mesurer la rapidité de l'algorithme et la comparer à la plus forte pente ;
+- comprendre **pourquoi** il est plus rapide, grâce au conditionnement ;
+- voir quand il est le bon choix, et quand il ne l'est pas.
 :::
 
-## 1. La courbe de convergence
+Les deux pages précédentes montraient que l'algorithme **fonctionne**, sur un petit circuit puis sur un grand réseau. Ici, on se demande : **est-il vraiment efficace, et pourquoi ?**
 
-On résout le réseau d'eau de 30 × 30 intersections (900 inconnues) avec les deux méthodes, et on regarde la **force restante** (le résidu) à chaque pas. Plus elle descend vite, mieux c'est.
+## 1. La rapidité
+
+On résout un réseau d'eau de 30 × 30 intersections (900 inconnues) avec les deux méthodes, et on suit la **force restante** à chaque pas.
 
 ```{r courbes}
 N <- 30
@@ -40,115 +41,64 @@ legend("topright", c("plus forte pente", "gradient conjugué"),
        col = c("#E8710A", "#0B6E6E"), lwd = 3, bty = "n")
 ```
 
-Le gradient conjugué atteint la précision demandée en **55 pas**, la plus forte pente en **3 559**. Même réponse, 65 fois moins de pas.
+**Comment lire ce graphique.** L'axe horizontal compte les pas. L'axe vertical montre la force restante : plus elle est basse, plus on est proche de la solution. Il est en échelle logarithmique : chaque graduation est 10 fois plus petite que la précédente, ce qui permet de voir une grandeur qui passe de 1 à 0,00000001. Plus la courbe descend vite, meilleure est la méthode.
+
+**Résultat :** le gradient conjugué atteint la précision demandée en **55 pas**, la plus forte pente en **3 559**. C'est 65 fois moins de pas pour la même réponse.
 
 ## 2. Pourquoi ? Le conditionnement
 
-Reprenons le circuit à deux nœuds. Le « bol » d'énergie est plus ou moins allongé. Le rapport entre la direction la plus raide et la plus plate s'appelle le **conditionnement** κ :
+Souvenons-nous du bol d'énergie. Un bol peut être **rond** ou **allongé** comme une vallée étroite.
+
+- Dans un bol **rond**, la plus forte pente pointe droit vers le fond : très peu de pas.
+- Dans un bol **allongé**, elle pointe vers le flanc : on zigzague, beaucoup de pas.
+
+Le **conditionnement**, noté κ, mesure à quel point le bol est allongé. C'est le rapport entre sa plus grande et sa plus petite « raideur », obtenues avec `eigen()` (les valeurs propres de K).
 
 ```{r kappa}
-K <- chaine(c(1, 10, 1))
+K <- chaine(c(1, 10, 1))        # le circuit de la page 1
 valeurs <- eigen(K)$values
-valeurs                                  # 21 et 1
-kappa <- max(valeurs) / min(valeurs)
-kappa
+valeurs                          # la plus grande et la plus petite raideur
+max(valeurs) / min(valeurs)      # le conditionnement
 ```
 
-Plus κ est grand, plus le bol est allongé, et plus la plus forte pente zigzague. La théorie donne la **vitesse de réduction de l'erreur à chaque pas** :
+Pour notre circuit, κ = 21 / 1 = **21**.
 
-| Méthode | Facteur par pas | Pour κ = 21 |
+| Conditionnement κ | Forme du bol | Difficulté |
 |:--|:--|:--|
-| Plus forte pente | (κ − 1) / (κ + 1) | 0,909 |
-| Gradient conjugué | (√κ − 1) / (√κ + 1) | 0,642 |
+| proche de 1 | rond | facile |
+| grand | vallée étroite | difficile |
 
-```{r facteurs}
-(kappa - 1) / (kappa + 1)                          # plus forte pente
-(sqrt(kappa) - 1) / (sqrt(kappa) + 1)              # gradient conjugué
-```
+Le point important est la façon dont le nombre de pas dépend de κ :
 
-On retrouve **0,909** dans l'historique de l'exemple de la page 1 : la force restante passait de 1 à 0,909 au premier pas. Le gradient conjugué dépend de **√κ**, la plus forte pente de **κ** : c'est la source de l'écart.
+- **plus forte pente** : le nombre de pas est proportionnel à **κ** ;
+- **gradient conjugué** : il est proportionnel à **√κ** (la racine carrée de κ).
 
 ::: retenir
-Plus forte pente : le nombre de pas est proportionnel à **κ**.
-Gradient conjugué : il est proportionnel à **√κ**.
-Avec κ = 10 000, cela fait 10 000 pas contre 100.
+Pour κ = 10 000, cela fait de l'ordre de 10 000 pas pour la plus forte pente, contre 100 pour le gradient conjugué. Plus le problème est difficile, plus l'écart se creuse.
 :::
 
-## 3. Quand le problème grandit
+Un autre résultat de la théorie : en calcul exact, le gradient conjugué termine en **au plus n pas** pour n inconnues. C'est ce que l'on a vu : 2 pas pour 2 inconnues, 3 pas pour les 9 inconnues du petit réseau.
 
-On agrandit le quartier d'eau, et on compte les pas :
+## 3. Une comparaison honnête
 
-```{r tailles}
-tailles <- c(10, 20, 30, 40)
-pas_cg <- numeric(length(tailles))
-pas_sd <- numeric(length(tailles))
-for (i in seq_along(tailles)) {
-  A <- reseau_grille(tailles[i])
-  f <- rep(0.01, tailles[i]^2)
-  pas_cg[i] <- cg(A, f)$iterations
-  pas_sd[i] <- descente_simple(A, f)$iterations
-}
-data.frame(cote = tailles, inconnues = tailles^2,
-           gradient_conjugue = pas_cg, plus_forte_pente = pas_sd)
-```
+Le gradient conjugué n'est pas la meilleure méthode partout.
 
-Quand le côté double, les inconnues quadruplent. Le nombre de pas du gradient conjugué **double** à peu près, celui de la plus forte pente **quadruple**. Cela confirme la théorie : un nombre de pas en √κ contre κ.
-
-```{r graphe-tailles}
-plot(tailles, pas_sd, type = "b", pch = 19, col = "#E8710A", lwd = 3, log = "y",
-     xlab = "côté du quartier (nombre d'intersections)", ylab = "nombre de pas (échelle log)",
-     main = "Le nombre de pas selon la taille")
-lines(tailles, pas_cg, type = "b", pch = 19, col = "#0B6E6E", lwd = 3)
-legend("bottomright", c("plus forte pente", "gradient conjugué"),
-       col = c("#E8710A", "#0B6E6E"), lwd = 3, bty = "n")
-```
-
-## 4. Le nombre de pas est borné
-
-En calcul exact, le gradient conjugué termine **en au plus n pas** pour n inconnues. Vérifions :
-
-```{r borne}
-c(circuit = cg(chaine(c(1, 10, 1)), c(1, 0))$iterations,
-  reseau_3x3 = cg(reseau_grille(3), c(0, 0, 0, 0, 8, 0, 0, 0, 0))$iterations)
-```
-
-2 inconnues et 2 pas pour le circuit. 9 inconnues et 3 pas pour le réseau 3 × 3. En pratique, on s'arrête bien avant n : après 74 pas sur 1 600 inconnues, la précision est déjà excellente.
-
-## 5. Comparaison honnête avec les autres méthodes
-
-Mesurons trois façons de résoudre le même réseau (40 × 40, soit 1 600 inconnues).
-
-```{r temps}
-N <- 40
-A <- reseau_grille(N)
-f <- rep(0.01, N * N)
-Ad <- as.matrix(A)                         # la même matrice, en version « pleine »
-
-system.time(x1 <- solve(Ad, f))            # élimination classique (matrice pleine)
-system.time(x2 <- solve(A, f))             # méthode directe pour matrice creuse
-system.time(x3 <- cg(A, f)$x)              # gradient conjugué
-
-max(abs(x1 - x3))                          # les réponses sont les mêmes
-```
-
-(Les temps dépendent de votre ordinateur.) Voici le bilan, sans l'embellir :
-
-| Situation | Meilleure méthode |
+| Situation | Meilleur choix |
 |:--|:--|
-| Petit système, peu d'inconnues | n'importe laquelle : `solve()` est très bien |
-| Grand système, matrice **creuse**, problème **2D** | méthode directe creuse et gradient conjugué sont proches |
-| Grand système **3D** ou très grande taille | **gradient conjugué** : peu de mémoire, il n'a besoin que de produits matrice × vecteur |
-| La même matrice, **beaucoup de seconds membres** | méthode directe : on factorise une fois |
+| Petit système | n'importe quelle méthode ; `solve()` est très bien |
+| Grand système creux, problème plan (2D) | méthode directe pour matrices creuses et gradient conjugué sont proches |
+| Très grand système, problème en volume (3D) | **gradient conjugué** : il utilise peu de mémoire |
+| Même matrice, **beaucoup de seconds membres** | méthode directe : on prépare la matrice une seule fois |
 | Une réponse approchée suffit | **gradient conjugué** : on s'arrête quand la précision est suffisante |
 
-## 6. Les limites
+## 4. Les limites
 
-- **K doit être symétrique définie positive.** Sinon, on utilise d'autres méthodes (BiCGStab, GMRES).
-- **Un grand conditionnement ralentit.** On y remédie par le **préconditionnement** : on multiplie le système par une matrice approchant l'inverse de K, pour rendre le bol plus rond. Ce n'est pas programmé dans ce package : c'est la suite naturelle du travail.
-- **Les erreurs d'arrondi** font perdre un peu l'exactitude « en n pas » : sur ordinateur, on s'arrête sur un critère de précision, pas sur le nombre de pas.
+- La matrice K doit être **symétrique définie positive**. Sinon, on utilise d'autres méthodes (GMRES, BiCGStab).
+- Quand κ est très grand, l'algorithme ralentit. Le remède s'appelle le **préconditionnement** : on transforme le système pour rendre le bol plus rond. Il n'est pas programmé dans ce package : c'est la suite naturelle du travail.
+- À cause des arrondis de l'ordinateur, on s'arrête sur un **critère de précision** plutôt que sur le nombre de pas.
 
 ::: conclusion
-**À retenir de cette page.** Le gradient conjugué est un algorithme qui progresse par des pas bien choisis ; il converge en un nombre de pas qui croît comme √κ ; il n'utilise que des produits matrice × vecteur. Il est la bonne méthode pour les grands systèmes creux, et il n'est pas la meilleure dans tous les cas.
+**À retenir.** Le gradient conjugué est bien plus rapide que la plus forte pente parce que son nombre de pas dépend de √κ et non de κ. Il est idéal pour les grands systèmes creux, sans être la meilleure méthode dans tous les cas.
 :::
 
 **Suite :** [4. Applications en ingénierie](appliquer.html)

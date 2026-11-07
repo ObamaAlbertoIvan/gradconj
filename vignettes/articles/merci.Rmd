@@ -6,8 +6,6 @@ title: "Fin"
 <p style='color:#0B6E6E;font-size:3rem;font-weight:bold;margin:0'>Merci pour votre attention</p>
 <div style='width:80px;height:4px;background:#E8710A;margin:22px auto'></div>
 <p style='font-size:1.5rem;margin:0 0 20px'>Des questions ?</p>
-<p>Le gradient conjugué résout <b>K u = f</b> en très peu d'itérations : 2 pas au lieu de 194 pour le circuit, 74 pas pour un quartier de 1 600 intersections.</p>
 <p>Code source et package : <a href='https://github.com/ObamaAlbertoIvan/gradconj'>github.com/ObamaAlbertoIvan/gradconj</a></p>
-<p style='color:#666'>Albert Ivan EYENGA OBAMA · ENSPD, Université de Douala</p>
 <p style='margin-top:28px'><a href='sommaire.html' style='background:#0B6E6E;color:#ffffff;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:1.05rem'>Retour au sommaire</a></p>
 </div>

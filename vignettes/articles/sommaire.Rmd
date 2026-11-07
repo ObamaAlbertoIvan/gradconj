@@ -2,44 +2,17 @@
 title: "Sommaire"
 ---
 
-Ce site présente le **gradient conjugué**, une méthode pour résoudre les systèmes d'équations $K u = f$, et le package R **gradconj** qui la programme. Voici le parcours conseillé : environ **12 minutes**, dans l'ordre.
+Ce site présente l'**algorithme du gradient conjugué**, une méthode pour résoudre de grands systèmes d'équations, et le package R **gradconj** qui le programme. Voici le plan, à suivre dans l'ordre.
 
 <div style="margin:1.5rem 0">
-
-<a href="comprendre.html" style="display:block;border-left:6px solid #0B6E6E;background:#EAF4F4;padding:12px 18px;margin:10px 0;border-radius:0 10px 10px 0;text-decoration:none;color:#1F2933">
-<b style="color:#0B6E6E;font-size:1.15rem">1. Comprendre</b><br>
-L'idée avec un circuit simple : le « bol » de l'énergie, pourquoi la descente simple zigzague, et comment le gradient conjugué va droit au but.
-</a>
-
-<a href="eau.html" style="display:block;border-left:6px solid #0B6E6E;background:#EAF4F4;padding:12px 18px;margin:10px 0;border-radius:0 10px 10px 0;text-decoration:none;color:#1F2933">
-<b style="color:#0B6E6E;font-size:1.15rem">2. L'eau</b><br>
-Le même calcul sur un quartier de 1 600 intersections : une matrice énorme, mais presque vide.
-</a>
-
-<a href="analyser.html" style="display:block;border-left:6px solid #0B6E6E;background:#EAF4F4;padding:12px 18px;margin:10px 0;border-radius:0 10px 10px 0;text-decoration:none;color:#1F2933">
-<b style="color:#0B6E6E;font-size:1.15rem">3. Analyser</b><br>
-La vitesse de convergence, le conditionnement, et une comparaison honnête avec les autres méthodes.
-</a>
-
-<a href="appliquer.html" style="display:block;border-left:6px solid #E8710A;background:#FFF1E4;padding:12px 18px;margin:10px 0;border-radius:0 10px 10px 0;text-decoration:none;color:#1F2933">
-<b style="color:#E8710A;font-size:1.15rem">4. Applications en ingénierie</b><br>
-Hydraulique, génie civil, génie thermique, génie électrique : quatre problèmes d'ingénieur résolus avec le package.
-</a>
-
-<a href="validation.html" style="display:block;border-left:6px solid #0B6E6E;background:#EAF4F4;padding:12px 18px;margin:10px 0;border-radius:0 10px 10px 0;text-decoration:none;color:#1F2933">
-<b style="color:#0B6E6E;font-size:1.15rem">5. Tests</b><br>
-Comment vérifier que les résultats sont justes : vérifications en direct et 17 tests automatiques.
-</a>
-
-<a href="../reference/index.html" style="display:block;border-left:6px solid #9AA5B1;background:#F4F6F8;padding:12px 18px;margin:10px 0;border-radius:0 10px 10px 0;text-decoration:none;color:#1F2933">
-<b style="color:#1F2933;font-size:1.15rem">Package : la documentation</b><br>
-Les 4 fonctions : <code>cg</code>, <code>descente_simple</code>, <code>chaine</code>, <code>reseau_grille</code>.
-</a>
-
+<a href='introduction.html' style='display:block;border-left:5px solid #0B6E6E;background:#EDF5F5;padding:12px 18px;margin:10px 0;border-radius:0 8px 8px 0;text-decoration:none;color:#1F2933'><b style='color:#0B6E6E;font-size:1.1rem'>Introduction</b><br>L'algorithme du gradient conjugué : le problème, l'idée, le plan.</a>
+<a href='comprendre.html' style='display:block;border-left:5px solid #0B6E6E;background:#EDF5F5;padding:12px 18px;margin:10px 0;border-radius:0 8px 8px 0;text-decoration:none;color:#1F2933'><b style='color:#0B6E6E;font-size:1.1rem'>1. Comprendre l'algorithme</b><br>Un petit circuit, le bol d'énergie, l'algorithme pas à pas.</a>
+<a href='eau.html' style='display:block;border-left:5px solid #0B6E6E;background:#EDF5F5;padding:12px 18px;margin:10px 0;border-radius:0 8px 8px 0;text-decoration:none;color:#1F2933'><b style='color:#0B6E6E;font-size:1.1rem'>2. L'eau</b><br>La même méthode sur un quartier de 1 600 intersections.</a>
+<a href='analyser.html' style='display:block;border-left:5px solid #0B6E6E;background:#EDF5F5;padding:12px 18px;margin:10px 0;border-radius:0 8px 8px 0;text-decoration:none;color:#1F2933'><b style='color:#0B6E6E;font-size:1.1rem'>3. Analyser</b><br>Rapidité, conditionnement, comparaison avec d'autres méthodes.</a>
+<a href='appliquer.html' style='display:block;border-left:5px solid #C65D0A;background:#FFF3E8;padding:12px 18px;margin:10px 0;border-radius:0 8px 8px 0;text-decoration:none;color:#1F2933'><b style='color:#C65D0A;font-size:1.1rem'>4. Applications en ingénierie</b><br>Génie civil (un immeuble sous le vent) et génie thermique (isoler un mur).</a>
+<a href='validation.html' style='display:block;border-left:5px solid #0B6E6E;background:#EDF5F5;padding:12px 18px;margin:10px 0;border-radius:0 8px 8px 0;text-decoration:none;color:#1F2933'><b style='color:#0B6E6E;font-size:1.1rem'>5. Tests</b><br>Comment on vérifie que le programme est juste.</a>
+<a href='conclusion.html' style='display:block;border-left:5px solid #0B6E6E;background:#EDF5F5;padding:12px 18px;margin:10px 0;border-radius:0 8px 8px 0;text-decoration:none;color:#1F2933'><b style='color:#0B6E6E;font-size:1.1rem'>Conclusion</b><br>Ce qu'il faut retenir et pour aller plus loin.</a>
+<a href='../reference/index.html' style='display:block;border-left:5px solid #6B7785;background:#F4F6F8;padding:12px 18px;margin:10px 0;border-radius:0 8px 8px 0;text-decoration:none;color:#1F2933'><b style='color:#6B7785;font-size:1.1rem'>Package : documentation</b><br>Les 4 fonctions : cg, descente_simple, chaine, reseau_grille.</a>
 </div>
 
-::: retenir
-**En une phrase.** Beaucoup de problèmes d'ingénieur s'écrivent $K u = f$ (circuit, réseau d'eau, bâtiment, mur). Le gradient conjugué les résout en peu d'itérations, même quand la matrice est énorme.
-:::
-
-<p style='text-align:center;margin-top:30px'><a href='comprendre.html' style='background:#E8710A;color:#ffffff;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:1.05rem'>Commencer : 1. Comprendre &rarr;</a></p>
+<p style='text-align:center;margin-top:30px'><a href='introduction.html' style='background:#C65D0A;color:#ffffff;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:1.05rem'>Commencer : Introduction &rarr;</a></p>

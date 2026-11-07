@@ -1,30 +1,33 @@
 url: https://obamaalbertoivan.github.io/gradconj/
 
+home:
+  title: Algorithme du gradient conjugué
+
 template:
   bootstrap: 5
   bootswatch: flatly
   bslib:
     primary: "#0B6E6E"
-    secondary: "#E8710A"
+    secondary: "#C65D0A"
     bg: "#FFFFFF"
     fg: "#1F2933"
     headings-color: "#0B6E6E"
     link-color: "#0B6E6E"
-    font-size-base: 1.05rem
+    font-size-base: 1.02rem
 
 navbar:
   bg: primary
   type: dark
   structure:
-    left: [sommaire, comprendre, eau, analyser, appliquer, validation, package, merci]
+    left: [sommaire, introduction, comprendre, eau, analyser, appliquer, validation, conclusion, package]
     right: [github]
   components:
-    merci:
-      text: "Merci"
-      href: articles/merci.html
     sommaire:
       text: "Sommaire"
       href: articles/sommaire.html
+    introduction:
+      text: "Introduction"
+      href: articles/introduction.html
     comprendre:
       text: "1. Comprendre"
       href: articles/comprendre.html
@@ -40,9 +43,22 @@ navbar:
     validation:
       text: "5. Tests"
       href: articles/validation.html
+    conclusion:
+      text: "Conclusion"
+      href: articles/conclusion.html
     package:
       text: "Package"
       href: reference/index.html
     github:
       icon: fab fa-github fa-lg
       href: https://github.com/ObamaAlbertoIvan/gradconj
+
+reference:
+  - title: "Résoudre K u = f"
+    contents:
+      - cg
+      - descente_simple
+  - title: "Construire les modèles"
+    contents:
+      - chaine
+      - reseau_grille

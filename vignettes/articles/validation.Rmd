@@ -8,82 +8,67 @@ library(gradconj)
 ```
 
 ::: vous-allez
-**Dans cette page :**
+**Dans cette page, vous allez comprendre :**
 
-- pourquoi on teste un programme, et ce que l'on teste ;
-- les **vérifications exécutées en direct** par cette page ;
-- les **tests automatiques** du package (17 vérifications) ;
-- comment **refaire ces tests soi-même en une minute**.
+- pourquoi on teste un programme, et comment ;
+- trois vérifications exécutées en direct ;
+- les 17 tests automatiques du package ;
+- comment les refaire soi-même.
 :::
 
 ## Pourquoi tester ?
 
-Un programme qui affiche un nombre ne prouve pas que le nombre est juste. On vérifie donc en comparant avec une réponse que l'on connaît **par un autre chemin** :
+Un programme qui affiche un nombre ne prouve pas que ce nombre est juste. C'est comme une balance : pour savoir si elle est fiable, on pose dessus un poids dont on connaît la valeur. Si elle affiche la bonne valeur, on peut lui faire confiance.
 
-1. une **réponse calculée à la main** (le circuit à deux nœuds) ;
-2. une **autre méthode** déjà reconnue (`solve()` de R) ;
-3. une **formule de physique** (la résistance équivalente, les résistances thermiques en série).
+Pour notre programme, on fait de même : on lui donne un problème dont **la réponse est connue par un autre chemin**, et on regarde s'il la retrouve. Nous utilisons trois sortes de références :
 
-## Vérifications exécutées par cette page
+1. **un calcul fait à la main** (le circuit à deux nœuds) ;
+2. **une autre méthode reconnue** (la fonction `solve()` de R) ;
+3. **une formule de physique** (les résistances thermiques en série).
 
-Chaque ligne ci-dessous est calculée au moment où le site est construit. `TRUE` signifie que la vérification est réussie.
+## Trois vérifications en direct
+
+Chaque vérification ci-dessous est exécutée au moment où le site est construit. `TRUE` veut dire que la comparaison est réussie.
+
+**1. Le circuit contre le calcul à la main.** Dans la page 1, nous avons trouvé à la main u = (11/21 ; 10/21). L'algorithme donne-t-il la même chose ?
 
 ```{r verif-circuit}
-# 1. Circuit : la réponse calculée à la main est (11/21 ; 10/21)
 res <- cg(chaine(c(1, 10, 1)), c(1, 0))
 isTRUE(all.equal(res$x, c(11/21, 10/21), tolerance = 1e-6))
 ```
 
+**2. Le réseau d'eau contre `solve()`.** On résout un réseau de 100 inconnues avec notre algorithme et avec la fonction de R. Les réponses doivent être les mêmes.
+
 ```{r verif-solve}
-# 2. Réseau d'eau 10 x 10 : le gradient conjugué donne la même réponse que solve()
 A <- reseau_grille(10)
 f <- rep(0.1, 100)
 x_cg    <- cg(A, f, tol = 1e-10)$x
 x_exact <- as.vector(solve(A, f))
 isTRUE(all.equal(x_cg, x_exact, tolerance = 1e-6))
-max(abs(x_cg - x_exact))        # l'écart maximal entre les deux méthodes
+max(abs(x_cg - x_exact))       # l'écart le plus grand entre les deux réponses
 ```
 
-```{r verif-3x3}
-# 3. Réseau 3 x 3 : pressions 3 / 1 / 0,5 comme calculé à la main
-res <- cg(reseau_grille(3), c(0, 0, 0, 0, 8, 0, 0, 0, 0))
-isTRUE(all.equal(res$x, c(0.5, 1, 0.5, 1, 3, 1, 0.5, 1, 0.5), tolerance = 1e-6))
-```
+L'écart est minuscule : les deux méthodes donnent la même réponse, à la précision de l'ordinateur près.
 
-```{r verif-immeuble}
-# 4. Immeuble : le toit se déplace de 16,5 mm
-res <- cg(chaine(c(rep(1e5, 10), 0)), rep(30, 10))
-isTRUE(all.equal(res$x[10], 0.0165, tolerance = 1e-5))
-```
+**3. Le mur contre la formule de physique.** Pour un mur, la chaleur qui passe est égale à l'écart de température divisé par la somme des résistances des couches. Notre algorithme doit retrouver cette valeur.
 
 ```{r verif-mur}
-# 5. Mur : le flux par gradient conjugué égale la formule (35 - 22) / somme des résistances
 e   <- c(0.02, 0.20, 0.05, 0.02)
 lam <- c(1.0, 1.4, 0.04, 0.35)
-m   <- c(2, 10, 5, 2)
-g   <- rep(lam * m / e, times = m)
-n   <- length(g) - 1
-b   <- rep(0, n)
-b[1] <- g[1] * 35
-b[n] <- b[n] + g[n + 1] * 22
-temp <- cg(chaine(g), b)$x
-flux_cg      <- g[1] * (35 - temp[1])
-flux_formule <- (35 - 22) / sum(1 / g)
-c(gradient_conjugue = flux_cg, formule = flux_formule)
+g   <- lam / e                                # conductance de chaque couche
+b   <- c(g[1] * 35, 0, g[4] * 22)             # les températures imposées aux bords
+temp <- cg(chaine(g), b)$x                    # températures aux interfaces
+flux_cg      <- g[1] * (35 - temp[1])         # chaleur calculée par l'algorithme
+flux_formule <- (35 - 22) / sum(1 / g)        # chaleur donnée par la formule
+c(algorithme = flux_cg, formule = flux_formule)
 isTRUE(all.equal(flux_cg, flux_formule, tolerance = 1e-5))
 ```
 
 ## Les tests automatiques du package
 
-Le dossier `tests/testthat/` du dépôt contient des tests écrits avec le package **testthat**. Ils vérifient la même chose que ci-dessus, et plus. Un test a toujours la même forme : *« avec ceci en entrée, je m'attends à cela en sortie »*.
+Les vérifications ci-dessus sont exécutées à la main. Le package contient aussi des **tests automatiques**, écrits avec le package **testthat** et rangés dans le dossier `tests/testthat/` du dépôt GitHub. L'avantage : on les relance tous **en une seule commande**, et on voit tout de suite si une modification du code a cassé quelque chose.
 
-| Fichier | Ce qui est vérifié |
-|:--|:--|
-| tests de `cg()` | solution du circuit (11/21 ; 10/21) ; accord avec `solve()` ; au plus 3 pas |
-| tests de `descente_simple()` | la plus forte pente trouve aussi la bonne solution |
-| `test-modeles.R` | forme de `chaine()` et de `reseau_grille()` ; réseau d'eau 3 × 3 ; accord avec `solve()` sur 100 inconnues ; immeuble (toit 16,5 mm, dérive 3 mm) ; mur (flux = formule) |
-
-Exemple de test, tiré de `test-modeles.R` :
+Un test a toujours la même forme : *« avec ceci en entrée, j'attends cela en sortie »*. Voici l'un d'eux :
 
 ```{r, eval=FALSE}
 test_that("reseau d'eau 3 x 3 : les pressions attendues", {
@@ -94,10 +79,22 @@ test_that("reseau d'eau 3 x 3 : les pressions attendues", {
 })
 ```
 
+Ce test dit : « sur le petit réseau 3 × 3 avec une usine au centre, je m'attends aux pressions 0,5 / 1 / 3 que l'on a lues à la main ». Si le programme donne autre chose, le test échoue.
+
+Les 17 tests couvrent :
+
+| Ce qui est testé | Pourquoi |
+|:--|:--|
+| `cg()` et `descente_simple()` | les deux méthodes donnent la bonne solution |
+| `chaine()` et `reseau_grille()` | les matrices construites ont la bonne forme et les bonnes valeurs |
+| le réseau d'eau | pressions 3 / 1 / 0,5 et accord avec `solve()` |
+| l'immeuble | déplacement du toit de 16,5 mm |
+| le mur | la chaleur calculée égale la formule |
+
 ## Refaire les tests soi-même
 
 ::: retenir
-**Option 1 : installer le package (30 secondes).** Dans R :
+**Option 1 : essayer le package (30 secondes).** Dans R :
 
 `install.packages("remotes")`
 
@@ -111,17 +108,13 @@ Réponse attendue : **0.5238095 0.4761905**.
 :::
 
 ::: retenir
-**Option 2 : lancer les 17 tests automatiques.** Télécharger le dépôt (bouton vert **Code**, puis **Download ZIP** sur GitHub), l'ouvrir dans RStudio, puis, dans la console :
+**Option 2 : lancer les 17 tests.** Sur GitHub, bouton vert **Code**, puis **Download ZIP**. Ouvrir le projet dans RStudio, puis taper dans la console :
 
 `devtools::test()`
 
-Résultat attendu : **FAIL 0 | WARN 0 | SKIP 0 | PASS 17**.
+Résultat attendu : **FAIL 0 | WARN 0 | SKIP 0 | PASS 17**, c'est-à-dire 0 échec et 17 réussis.
 :::
 
-**Option 3 : la démonstration.** Le fichier `scripts/demo.R` du dépôt contient une démonstration en direct : circuit, quartier d'eau, immeuble, puis les tests.
+**Option 3 : la démonstration.** Le fichier `scripts/demo.R` du dépôt exécute, ligne par ligne, le circuit, le quartier d'eau, l'immeuble, puis les tests.
 
-::: attention
-Tous les résultats de ce site viennent du code du dépôt. Si un chiffre vous étonne, le moyen le plus sûr est d'exécuter la ligne correspondante : le code est court et lisible.
-:::
-
-<p style='text-align:center;margin-top:30px'><a href='merci.html' style='background:#E8710A;color:#ffffff;padding:10px 24px;border-radius:6px;text-decoration:none;font-size:1.05rem'>Terminer &rarr;</a></p>
+**Suite :** [Conclusion](conclusion.html)
