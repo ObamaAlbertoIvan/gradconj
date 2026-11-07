@@ -1,0 +1,111 @@
+# Introduction : l'algorithme du gradient conjugué
+
+**Dans cette introduction, vous allez comprendre :**
+
+- ce qu’est un algorithme, et quel problème celui-ci résout ;
+- pourquoi ce problème est important en ingénierie ;
+- l’idée du gradient conjugué, sans calcul ;
+- le plan de la présentation.
+
+## Un algorithme, c’est quoi ?
+
+Un **algorithme** est une suite d’instructions, toujours les mêmes, qui
+permet à un ordinateur de résoudre un problème. Une recette de cuisine
+en est un bon exemple : on suit les étapes dans l’ordre et on obtient le
+plat.
+
+L’**algorithme du gradient conjugué** résout un problème précis :
+trouver les inconnues d’un **système d’équations linéaires**.
+
+## Le problème à résoudre
+
+En mathématiques, un système d’équations linéaires s’écrit :
+
+``` math
+A\,x = b
+```
+
+- **A** est un tableau de nombres (une *matrice*), connu ;
+- **b** est une liste de nombres, connue ;
+- **x** est la liste des inconnues, que l’on cherche.
+
+En ingénierie, on garde la même équation, mais on change les lettres
+pour rappeler le sens physique :
+
+``` math
+K\,u = f
+```
+
+| Lettre | Rôle | Exemple (circuit électrique) |
+|:---|:---|:---|
+| **f** | ce qu’on **impose** au système | un courant injecté |
+| **u** | ce qu’on **cherche** : la réaction du système | les tensions aux nœuds |
+| **K** | la **description du système** : comment ses éléments sont reliés | les conductances des fils |
+
+C’est le même problème, avec des noms plus parlants. Dans la suite, on
+utilise la notation de l’ingénieur.
+
+## Où rencontre-t-on ce problème ?
+
+Partout où une quantité se répartit dans un réseau ou dans un milieu.
+
+| Domaine      | Ce qu’on impose (f)        | Ce qu’on cherche (u) |
+|:-------------|:---------------------------|:---------------------|
+| Électricité  | des courants               | des tensions         |
+| Réseau d’eau | des débits consommés       | des pressions        |
+| Construction | des forces (vent, charges) | des déplacements     |
+| Thermique    | de la chaleur              | des températures     |
+
+Une seule méthode de calcul sert donc à plusieurs métiers. C’est ce qui
+rend l’algorithme intéressant.
+
+## Pourquoi un algorithme spécial ?
+
+Avec 2 ou 3 inconnues, on résout à la main. Mais un vrai problème en
+compte **des milliers, voire des millions** : un réseau de 1 600
+intersections, un bâtiment modélisé en détail. Il faut alors une méthode
+**rapide**, qui n’utilise **pas trop de mémoire**.
+
+## L’idée du gradient conjugué
+
+L’idée tient en trois phrases :
+
+1.  On transforme le problème : au lieu de résoudre l’équation, on
+    cherche le **point le plus bas d’un bol**, une surface qui
+    représente l’énergie du système.
+2.  On descend vers ce point **pas à pas**, en partant de zéro.
+3.  À chaque pas, on choisit la **direction de descente avec soin**,
+    pour ne pas défaire le travail des pas précédents.
+
+On obtient une solution précise en **peu de pas**, même avec beaucoup
+d’inconnues. Le seul calcul demandé à l’ordinateur est simple et répété
+: multiplier la matrice par une liste de nombres.
+
+**Condition.** L’algorithme fonctionne quand la matrice K est
+**symétrique** (un lien entre deux éléments agit de la même façon dans
+les deux sens) et **définie positive** (le système est stable : le bol a
+un fond). C’est le cas de la plupart des systèmes physiques stables, et
+de tous nos exemples.
+
+## Le plan de la présentation
+
+| Partie | Ce qu’on y fait |
+|:---|:---|
+| **1. Comprendre** | on suit l’algorithme sur un petit circuit |
+| **2. L’eau** | on l’utilise sur un grand réseau d’eau |
+| **3. Analyser** | on mesure sa rapidité et on le compare à d’autres méthodes |
+| **4. Applications** | on l’applique en génie civil et en génie thermique |
+| **5. Tests** | on vérifie que le programme est juste |
+
+Tout au long du site, on utilise le package R **gradconj**, qui contient
+quatre fonctions :
+
+| Fonction | Rôle |
+|:---|:---|
+| [`cg()`](https://obamaalbertoivan.github.io/gradconj/reference/cg.md) | le gradient conjugué |
+| [`descente_simple()`](https://obamaalbertoivan.github.io/gradconj/reference/descente_simple.md) | la méthode « plus forte pente », pour comparer |
+| [`chaine()`](https://obamaalbertoivan.github.io/gradconj/reference/chaine.md) | construit la matrice K d’une chaîne d’éléments (circuit, immeuble, mur) |
+| [`reseau_grille()`](https://obamaalbertoivan.github.io/gradconj/reference/reseau_grille.md) | construit la matrice K d’un réseau en grille (quartier d’eau) |
+
+**Suite :** [1. Comprendre
+l’algorithme](https://obamaalbertoivan.github.io/gradconj/articles/comprendre.md)

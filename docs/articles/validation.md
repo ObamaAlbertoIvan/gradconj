@@ -1,0 +1,158 @@
+# 5. Les tests : comment savoir que le programme est juste ?
+
+**Dans cette page, vous allez comprendre :**
+
+- pourquoi on teste un programme, et comment ;
+- trois vérifications exécutées en direct ;
+- les 17 tests automatiques du package ;
+- comment les refaire soi-même.
+
+## Pourquoi tester ?
+
+Un programme qui affiche un nombre ne prouve pas que ce nombre est
+juste. C’est comme une balance : pour savoir si elle est fiable, on pose
+dessus un poids dont on connaît la valeur. Si elle affiche la bonne
+valeur, on peut lui faire confiance.
+
+Pour notre programme, on fait de même : on lui donne un problème dont
+**la réponse est connue par un autre chemin**, et on regarde s’il la
+retrouve. Nous utilisons trois sortes de références :
+
+1.  **un calcul fait à la main** (le circuit à deux nœuds) ;
+2.  **une autre méthode reconnue** (la fonction
+    [`solve()`](https://rdrr.io/r/base/solve.html) de R) ;
+3.  **une formule de physique** (les résistances thermiques en série).
+
+## Trois vérifications en direct
+
+Chaque vérification ci-dessous est exécutée au moment où le site est
+construit. `TRUE` veut dire que la comparaison est réussie.
+
+**1. Le circuit contre le calcul à la main.** Dans la page 1, nous avons
+trouvé à la main u = (11/21 ; 10/21). L’algorithme donne-t-il la même
+chose ?
+
+``` r
+
+res <- cg(chaine(c(1, 10, 1)), c(1, 0))
+isTRUE(all.equal(res$x, c(11/21, 10/21), tolerance = 1e-6))
+```
+
+    ## [1] TRUE
+
+**2. Le réseau d’eau contre
+[`solve()`](https://rdrr.io/r/base/solve.html).** On résout un réseau de
+100 inconnues avec notre algorithme et avec la fonction de R. Les
+réponses doivent être les mêmes.
+
+``` r
+
+A <- reseau_grille(10)
+f <- rep(0.1, 100)
+x_cg    <- cg(A, f, tol = 1e-10)$x
+x_exact <- as.vector(solve(A, f))
+isTRUE(all.equal(x_cg, x_exact, tolerance = 1e-6))
+```
+
+    ## [1] TRUE
+
+``` r
+
+max(abs(x_cg - x_exact))       # l'écart le plus grand entre les deux réponses
+```
+
+    ## [1] 9.992007e-16
+
+L’écart est minuscule : les deux méthodes donnent la même réponse, à la
+précision de l’ordinateur près.
+
+**3. Le mur contre la formule de physique.** Pour un mur, la chaleur qui
+passe est égale à l’écart de température divisé par la somme des
+résistances des couches. Notre algorithme doit retrouver cette valeur.
+
+``` r
+
+e   <- c(0.02, 0.20, 0.05, 0.02)
+lam <- c(1.0, 1.4, 0.04, 0.35)
+g   <- lam / e                                # conductance de chaque couche
+b   <- c(g[1] * 35, 0, g[4] * 22)             # les températures imposées aux bords
+temp <- cg(chaine(g), b)$x                    # températures aux interfaces
+flux_cg      <- g[1] * (35 - temp[1])         # chaleur calculée par l'algorithme
+flux_formule <- (35 - 22) / sum(1 / g)        # chaleur donnée par la formule
+c(algorithme = flux_cg, formule = flux_formule)
+```
+
+    ## algorithme    formule 
+    ##   8.843537   8.843537
+
+``` r
+
+isTRUE(all.equal(flux_cg, flux_formule, tolerance = 1e-5))
+```
+
+    ## [1] TRUE
+
+## Les tests automatiques du package
+
+Les vérifications ci-dessus sont exécutées à la main. Le package
+contient aussi des **tests automatiques**, écrits avec le package
+**testthat** et rangés dans le dossier `tests/testthat/` du dépôt
+GitHub. L’avantage : on les relance tous **en une seule commande**, et
+on voit tout de suite si une modification du code a cassé quelque chose.
+
+Un test a toujours la même forme : *« avec ceci en entrée, j’attends
+cela en sortie »*. Voici l’un d’eux :
+
+``` r
+
+test_that("reseau d'eau 3 x 3 : les pressions attendues", {
+  A <- reseau_grille(3)
+  f <- c(0, 0, 0, 0, 8, 0, 0, 0, 0)
+  res <- cg(A, f)
+  expect_equal(res$x, c(0.5, 1, 0.5, 1, 3, 1, 0.5, 1, 0.5), tolerance = 1e-6)
+})
+```
+
+Ce test dit : « sur le petit réseau 3 × 3 avec une usine au centre, je
+m’attends aux pressions 0,5 / 1 / 3 que l’on a lues à la main ». Si le
+programme donne autre chose, le test échoue.
+
+Les 17 tests couvrent :
+
+| Ce qui est testé | Pourquoi |
+|:---|:---|
+| [`cg()`](https://obamaalbertoivan.github.io/gradconj/reference/cg.md) et [`descente_simple()`](https://obamaalbertoivan.github.io/gradconj/reference/descente_simple.md) | les deux méthodes donnent la bonne solution |
+| [`chaine()`](https://obamaalbertoivan.github.io/gradconj/reference/chaine.md) et [`reseau_grille()`](https://obamaalbertoivan.github.io/gradconj/reference/reseau_grille.md) | les matrices construites ont la bonne forme et les bonnes valeurs |
+| le réseau d’eau | pressions 3 / 1 / 0,5 et accord avec [`solve()`](https://rdrr.io/r/base/solve.html) |
+| l’immeuble | déplacement du toit de 16,5 mm |
+| le mur | la chaleur calculée égale la formule |
+
+## Refaire les tests soi-même
+
+**Option 1 : essayer le package (30 secondes).** Dans R :
+
+`install.packages("remotes")`
+
+`remotes::install_github("ObamaAlbertoIvan/gradconj")`
+
+[`library(gradconj)`](https://rdrr.io/r/base/library.html)
+
+`cg(chaine(c(1, 10, 1)), c(1, 0))$x`
+
+Réponse attendue : **0.5238095 0.4761905**.
+
+**Option 2 : lancer les 17 tests.** Sur GitHub, bouton vert **Code**,
+puis **Download ZIP**. Ouvrir le projet dans RStudio, puis taper dans la
+console :
+
+[`devtools::test()`](https://rdrr.io/pkg/devtools/man/test.html)
+
+Résultat attendu : **FAIL 0 \| WARN 0 \| SKIP 0 \| PASS 17**,
+c’est-à-dire 0 échec et 17 réussis.
+
+**Option 3 : la démonstration.** Le fichier `scripts/demo.R` du dépôt
+exécute, ligne par ligne, le circuit, le quartier d’eau, l’immeuble,
+puis les tests.
+
+**Suite :**
+[Conclusion](https://obamaalbertoivan.github.io/gradconj/articles/conclusion.md)

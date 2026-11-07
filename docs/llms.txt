@@ -1,0 +1,57 @@
+![Logo](reference/figures/logo_ecole.jpeg)
+
+**École Nationale Supérieure Polytechnique de Douala**\
+Université de Douala
+
+Introduction A R
+
+Algorithme du gradient conjugué
+
+De l’idée à l’ingénierie : un package R
+
+Présenté par **Albert Ivan EYENGA OBAMA**
+
+Matricule : 24G00823
+
+Encadrant : M. Ngneumeu Ivan
+
+Année académique 2026-2027
+
+[Entrer dans le site
+→](https://obamaalbertoivan.github.io/gradconj/articles/sommaire.md)
+
+# Package index
+
+## Résoudre K u = f
+
+- [`cg()`](https://obamaalbertoivan.github.io/gradconj/reference/cg.md)
+  : Gradient conjugue
+- [`descente_simple()`](https://obamaalbertoivan.github.io/gradconj/reference/descente_simple.md)
+  : Descente de gradient (pour comparer)
+
+## Construire les modèles
+
+- [`chaine()`](https://obamaalbertoivan.github.io/gradconj/reference/chaine.md)
+  : Matrice d'une chaine de noeuds
+- [`reseau_grille()`](https://obamaalbertoivan.github.io/gradconj/reference/reseau_grille.md)
+  : Matrice d'un reseau en grille
+
+# Articles
+
+### All vignettes
+
+- [3. Analyser
+  l'algorithme](https://obamaalbertoivan.github.io/gradconj/articles/analyser.md):
+- [4. Applications en
+  ingénierie](https://obamaalbertoivan.github.io/gradconj/articles/appliquer.md):
+- [1. Comprendre l'algorithme sur un petit
+  circuit](https://obamaalbertoivan.github.io/gradconj/articles/comprendre.md):
+- [Conclusion](https://obamaalbertoivan.github.io/gradconj/articles/conclusion.md):
+- [2. Un deuxième exemple : l'eau d'un
+  quartier](https://obamaalbertoivan.github.io/gradconj/articles/eau.md):
+- [Introduction : l'algorithme du gradient
+  conjugué](https://obamaalbertoivan.github.io/gradconj/articles/introduction.md):
+- [Fin](https://obamaalbertoivan.github.io/gradconj/articles/merci.md):
+- [Sommaire](https://obamaalbertoivan.github.io/gradconj/articles/sommaire.md):
+- [5. Les tests : comment savoir que le programme est juste
+  ?](https://obamaalbertoivan.github.io/gradconj/articles/validation.md):

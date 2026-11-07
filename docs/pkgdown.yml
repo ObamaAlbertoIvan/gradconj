@@ -1,0 +1,17 @@
+pandoc: '3.10'
+pkgdown: 2.2.1
+pkgdown_sha: ~
+articles:
+  articles/analyser: analyser.html
+  articles/appliquer: appliquer.html
+  articles/comprendre: comprendre.html
+  articles/conclusion: conclusion.html
+  articles/eau: eau.html
+  articles/introduction: introduction.html
+  articles/merci: merci.html
+  articles/sommaire: sommaire.html
+  articles/validation: validation.html
+last_built: 2026-11-07T01:41Z
+urls:
+  reference: https://obamaalbertoivan.github.io/gradconj/reference
+  article: https://obamaalbertoivan.github.io/gradconj/articles
